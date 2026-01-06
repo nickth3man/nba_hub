@@ -1,0 +1,2 @@
+check_name,severity,table,violation_count
+Field goals made > attempted,CRITICAL,team_game_stats,86

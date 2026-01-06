@@ -1,0 +1,76 @@
+table_name,table_type,column_count,layer,row_count
+all_star_selections,BASE TABLE,6,base,2004.0
+award_voting_shares,BASE TABLE,10,base,3397.0
+br_player_box_scores,BASE TABLE,28,base,0.0
+br_player_box_scores_silver,BASE TABLE,28,silver,0.0
+br_player_season_advanced,BASE TABLE,28,base,33161.0
+br_player_season_advanced_silver,BASE TABLE,28,silver,8912.0
+br_player_season_totals,BASE TABLE,33,base,33163.0
+br_player_season_totals_silver,BASE TABLE,33,silver,9178.0
+br_schedule,BASE TABLE,15,base,1321.0
+common_player_info,BASE TABLE,34,base,4171.0
+common_player_info_raw,BASE TABLE,27,raw,0.0
+common_player_info_silver,BASE TABLE,34,silver,4171.0
+draft_combine_stats,BASE TABLE,48,base,1202.0
+draft_combine_stats_raw,BASE TABLE,19,raw,0.0
+draft_combine_stats_silver,BASE TABLE,48,silver,1202.0
+draft_history,BASE TABLE,15,base,8374.0
+draft_history_raw,BASE TABLE,13,raw,0.0
+draft_history_silver,BASE TABLE,15,silver,8374.0
+franchise_history_raw,BASE TABLE,16,raw,74.0
+franchise_leaders_raw,BASE TABLE,14,raw,150.0
+game,BASE TABLE,56,base,65698.0
+game_gold,BASE TABLE,9,gold,0.0
+game_gold_silver,BASE TABLE,56,silver,70228.0
+game_info,BASE TABLE,5,base,58053.0
+game_info_silver,BASE TABLE,5,silver,58053.0
+game_raw,BASE TABLE,26,raw,0.0
+game_silver,BASE TABLE,56,silver,65642.0
+game_summary,BASE TABLE,15,base,58110.0
+game_summary_silver,BASE TABLE,15,silver,58110.0
+games,BASE TABLE,10,base,70228.0
+games_silver,BASE TABLE,10,silver,70228.0
+inactive_players,BASE TABLE,10,base,110191.0
+inactive_players_silver,BASE TABLE,10,silver,110191.0
+line_score,BASE TABLE,44,base,58053.0
+line_score_silver,BASE TABLE,44,silver,58053.0
+officials,BASE TABLE,6,base,70971.0
+officials_silver,BASE TABLE,6,silver,70971.0
+other_stats,BASE TABLE,27,base,28271.0
+other_stats_silver,BASE TABLE,27,silver,28271.0
+play_by_play,BASE TABLE,24,base,0.0
+play_by_play_silver,BASE TABLE,24,silver,492.0
+player,BASE TABLE,6,base,5116.0
+player_game_stats,BASE TABLE,26,base,0.0
+player_game_stats_raw,BASE TABLE,26,raw,0.0
+player_game_stats_silver,BASE TABLE,26,silver,769033.0
+player_gold,BASE TABLE,5,gold,5104.0
+player_gold_silver,BASE TABLE,5,silver,5104.0
+player_raw,BASE TABLE,5,raw,0.0
+player_season_averages,BASE TABLE,14,base,18745.0
+player_season_stats,BASE TABLE,29,base,0.0
+player_season_stats_silver,BASE TABLE,29,silver,19231.0
+player_silver,BASE TABLE,5,silver,0.0
+player_splits_raw,BASE TABLE,35,raw,6.0
+team,BASE TABLE,8,base,30.0
+team_details,BASE TABLE,15,base,25.0
+team_details_raw,BASE TABLE,14,raw,0.0
+team_details_silver,BASE TABLE,15,silver,25.0
+team_game_stats,BASE TABLE,24,base,140456.0
+team_game_stats_silver,BASE TABLE,24,silver,140456.0
+team_gold,BASE TABLE,7,gold,82.0
+team_gold_silver,BASE TABLE,7,silver,82.0
+team_history,BASE TABLE,6,base,52.0
+team_history_silver,BASE TABLE,6,silver,52.0
+team_info_common,BASE TABLE,27,base,0.0
+team_info_common_raw,BASE TABLE,27,raw,0.0
+team_info_common_silver,BASE TABLE,27,silver,0.0
+team_raw,BASE TABLE,7,raw,0.0
+team_rolling_metrics,BASE TABLE,10,base,140456.0
+team_silver,BASE TABLE,7,silver,0.0
+team_standings,BASE TABLE,7,base,3036.0
+league_season_averages,VIEW,16,base,
+player_career_summary,VIEW,13,base,
+player_game_advanced,VIEW,29,base,
+team_four_factors,VIEW,12,base,
+team_game_advanced,VIEW,27,base,
