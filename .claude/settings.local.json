@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(tree:*)",
+      "Bash(duckdb:*)",
+      "Bash(pip install:*)",
+      "Bash(python acquire_recent_nbaapi.py:*)"
+    ]
+  }
+}

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}NBA Hub{% endblock %}</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/styles.css">
+
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-blue-900 text-white shadow-lg">
+        <div class="container mx-auto px-4">
+            <div class="flex items-center justify-between py-4">
+                <!-- Logo -->
+                <a href="/" class="text-2xl font-bold hover:text-blue-200 transition">
+                    NBA Hub
+                </a>
+
+                <!-- Desktop Navigation -->
+                <div class="hidden md:flex space-x-6">
+                    <a href="/" class="hover:text-blue-200 transition">Home</a>
+                    <a href="/players/search" class="hover:text-blue-200 transition">Players</a>
+                    <a href="/teams" class="hover:text-blue-200 transition">Teams</a>
+                    <a href="/leaders" class="hover:text-blue-200 transition">Leaders</a>
+                    <a href="/games" class="hover:text-blue-200 transition">Games</a>
+                </div>
+
+                <!-- Search Box -->
+                <div class="hidden md:block" x-data="searchBox()">
+                    <div class="relative">
+                        <input
+                            type="text"
+                            x-model="query"
+                            @input.debounce.300ms="search()"
+                            @focus="showResults = true"
+                            @blur.debounce.200ms="showResults = false"
+                            placeholder="Search players..."
+                            class="px-4 py-2 rounded-lg text-gray-900 w-64 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                        >
+                        <!-- Search Results Dropdown -->
+                        <div
+                            x-show="showResults && results.length > 0"
+                            class="absolute top-full mt-2 w-full bg-white rounded-lg shadow-xl z-50 max-h-96 overflow-y-auto"
+                        >
+                            <template x-for="result in results" :key="result.player_id">
+                                <a
+                                    :href="'/players/' + result.player_id"
+                                    class="block px-4 py-3 hover:bg-blue-50 border-b border-gray-100 text-gray-900"
+                                    @mousedown.prevent="window.location.href = '/players/' + result.player_id"
+                                >
+                                    <div class="font-semibold" x-text="result.player_name"></div>
+                                    <div class="text-sm text-gray-600">
+                                        <span x-text="result.position || 'N/A'"></span>
+                                        <span x-show="result.from_year">
+                                            | <span x-text="result.from_year"></span>-<span x-text="result.to_year || 'Present'"></span>
+                                        </span>
+                                    </div>
+                                </a>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mobile Menu Button -->
+                <button class="md:hidden" @click="mobileMenuOpen = !mobileMenuOpen">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Mobile Navigation -->
+            <div class="md:hidden pb-4" x-show="mobileMenuOpen" x-data="{mobileMenuOpen: false}">
+                <a href="/" class="block py-2 hover:text-blue-200 transition">Home</a>
+                <a href="/players/search" class="block py-2 hover:text-blue-200 transition">Players</a>
+                <a href="/teams" class="block py-2 hover:text-blue-200 transition">Teams</a>
+                <a href="/leaders" class="block py-2 hover:text-blue-200 transition">Leaders</a>
+                <a href="/games" class="block py-2 hover:text-blue-200 transition">Games</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white mt-12">
+        <div class="container mx-auto px-4 py-6">
+            <div class="text-center">
+                <p>&copy; 2024 NBA Hub. All rights reserved.</p>
+                <p class="text-sm text-gray-400 mt-2">
+                    Data sourced from NBA API and Basketball Reference
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Custom JS -->
+    <script src="/static/js/app.js"></script>
+
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

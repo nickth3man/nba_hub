@@ -510,9 +510,9 @@ class HistoricalPlayerBoxScoreAcquisition:
             axis=1
         )
 
-        # Convert seconds to minutes
+        # Convert seconds to minutes (as integer for database BIGINT column)
         df['min'] = df['seconds_played'].apply(
-            lambda s: f"{s // 60}:{s % 60:02d}" if pd.notna(s) and s > 0 else "0:00"
+            lambda s: int(s // 60) if pd.notna(s) and s > 0 else 0
         )
 
         # Map teams

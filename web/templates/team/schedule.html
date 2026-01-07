@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block title %}{{ team.team_name }} Schedule - NBA Hub{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- Team Header -->
+    <div class="bg-white rounded-lg shadow-lg p-6">
+        <div class="flex items-start justify-between">
+            <div>
+                <h1 class="text-4xl font-bold text-blue-900 mb-2">{{ team.team_name }}</h1>
+                <p class="text-xl text-gray-600">Schedule & Results</p>
+            </div>
+            <div class="flex gap-2">
+                <a href="/teams/{{ team.team_id }}/roster" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">
+                    Roster
+                </a>
+                <a href="/teams/{{ team.team_id }}" class="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition">
+                    Overview
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Season Selector -->
+    {% if available_seasons %}
+    <div class="bg-white rounded-lg shadow-lg p-6">
+        <label for="season-select" class="block text-sm font-semibold text-gray-700 mb-2">
+            Select Season:
+        </label>
+        <select
+            id="season-select"
+            class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            onchange="window.location.href = '/teams/{{ team.team_id }}/schedule?season=' + this.value"
+        >
+            {% for season in available_seasons %}
+            <option value="{{ season }}" {% if season == selected_season %}selected{% endif %}>
+                {{ season|format_season }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+    {% endif %}
+
+    <!-- Schedule Table -->
+    {% if schedule %}
+    <div class="bg-white rounded-lg shadow-lg p-6">
+        <h2 class="text-2xl font-bold text-blue-900 mb-4 border-b-2 border-blue-900 pb-2">
+            Games ({{ schedule|length }})
+        </h2>
+        <div class="overflow-x-auto">
+            <table class="w-full stat-table">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Date</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Opponent</th>
+                        <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700">Location</th>
+                        <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700">Season</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% for game in schedule %}
+                    <tr class="hover:bg-blue-50 stat-row">
+                        <td class="px-4 py-3 text-sm">{{ game.game_date|format_date }}</td>
+                        <td class="px-4 py-3 text-sm">
+                            {% if game.home_team_id == team.team_id %}
+                            vs Team {{ game.visitor_team_id }}
+                            {% else %}
+                            @ Team {{ game.home_team_id }}
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-sm text-center">
+                            {% if game.home_team_id == team.team_id %}
+                            <span class="badge badge-blue">Home</span>
+                            {% else %}
+                            <span class="badge badge-green">Away</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-sm text-center">{{ game.season }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-3 rounded-lg">
+        <p>No schedule data available for the selected season.</p>
+    </div>
+    {% endif %}
+
+    <!-- Back to Teams -->
+    <div>
+        <a href="/teams" class="text-blue-600 hover:underline">
+            ← Back to All Teams
+        </a>
+    </div>
+</div>
+{% endblock %}

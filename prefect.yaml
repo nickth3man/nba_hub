@@ -1,0 +1,77 @@
+# Prefect Configuration for NBA Hub
+# This file configures the Prefect deployment settings for the NBA data pipeline
+
+# Prefect project metadata
+name: nba-hub
+prefect-version: 2.14.0
+
+# Build configuration - how to package the code
+build:
+
+# Push configuration - where to store the code (if needed)
+push:
+
+# Pull configuration - how to retrieve the code for execution
+pull:
+  - prefect.deployments.steps.set_working_directory:
+      directory: .
+
+# Deployment configurations
+deployments:
+  - name: daily-player-boxscores
+    entrypoint: flows/daily_update.py:daily_player_boxscores
+    work_pool:
+      name: local
+    schedule:
+      cron: "0 6 * * *"
+      timezone: "America/New_York"
+    parameters: {}
+    tags:
+      - daily
+      - nba-api
+      - current-season
+
+  - name: weekly-advanced-metrics
+    entrypoint: flows/weekly_advanced_metrics.py:update_advanced_metrics
+    work_pool:
+      name: local
+    schedule:
+      cron: "0 8 * * 0"
+      timezone: "America/New_York"
+    parameters: {}
+    tags:
+      - weekly
+      - basketball-reference
+      - advanced-stats
+
+  - name: monthly-data-validation
+    entrypoint: flows/monthly_validation.py:validate_data_quality
+    work_pool:
+      name: local
+    schedule:
+      cron: "0 9 1 * *"
+      timezone: "America/New_York"
+    parameters: {}
+    tags:
+      - monthly
+      - data-quality
+      - validation
+
+  - name: historical-backfill
+    entrypoint: flows/historical_backfill.py:historical_backfill
+    work_pool:
+      name: local
+    # No schedule - manual execution only
+    parameters:
+      start_year: 2000
+      end_year: 2024
+    tags:
+      - manual
+      - backfill
+      - historical
+
+# Work pool configuration
+work_pools:
+  local:
+    type: process
+    concurrency_limit: 2

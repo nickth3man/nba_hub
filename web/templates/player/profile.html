@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}{{ player.display_first_last }} - NBA Hub{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- Player Header -->
+    <div class="bg-white rounded-lg shadow-lg p-6">
+        <div class="flex items-start justify-between">
+            <div>
+                <h1 class="text-4xl font-bold text-blue-900 mb-2">{{ player.display_first_last }}</h1>
+                <div class="flex flex-wrap gap-4 text-gray-600">
+                    {% if player.position %}
+                    <span class="badge badge-blue">{{ player.position }}</span>
+                    {% endif %}
+                    {% if player.height %}
+                    <span>Height: {{ player.height|format_height }}</span>
+                    {% endif %}
+                    {% if player.weight %}
+                    <span>Weight: {{ player.weight|format_weight }}</span>
+                    {% endif %}
+                    {% if player.birthdate %}
+                    <span>Born: {{ player.birthdate|format_date }}</span>
+                    {% endif %}
+                </div>
+                {% if player.from_year and player.to_year %}
+                <p class="mt-2 text-gray-600">
+                    <strong>Career:</strong> {{ player.from_year }} - {{ player.to_year }}
+                </p>
+                {% endif %}
+            </div>
+            <div>
+                <a href="/players/{{ player.player_id }}/gamelog" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">
+                    View Game Log
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Career Stats -->
+    {% if career_stats %}
+    <div class="bg-white rounded-lg shadow-lg p-6">
+        <h2 class="text-2xl font-bold text-blue-900 mb-4 border-b-2 border-blue-900 pb-2">
+            Career Averages
+        </h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+            <div class="text-center p-4 bg-blue-50 rounded-lg">
+                <div class="text-3xl font-bold text-blue-900">{{ career_stats.games_played }}</div>
+                <div class="text-sm text-gray-600 mt-1">Games</div>
+            </div>
+            <div class="text-center p-4 bg-blue-50 rounded-lg">
+                <div class="text-3xl font-bold text-blue-900">{{ career_stats.points_per_game|format_stat }}</div>
+                <div class="text-sm text-gray-600 mt-1">PPG</div>
+            </div>
+            <div class="text-center p-4 bg-blue-50 rounded-lg">
+                <div class="text-3xl font-bold text-blue-900">{{ career_stats.rebounds_per_game|format_stat }}</div>
+                <div class="text-sm text-gray-600 mt-1">RPG</div>
+            </div>
+            <div class="text-center p-4 bg-blue-50 rounded-lg">
+                <div class="text-3xl font-bold text-blue-900">{{ career_stats.assists_per_game|format_stat }}</div>
+                <div class="text-sm text-gray-600 mt-1">APG</div>
+            </div>
+            <div class="text-center p-4 bg-blue-50 rounded-lg">
+                <div class="text-3xl font-bold text-blue-900">{{ career_stats.field_goal_pct|format_stat }}%</div>
+                <div class="text-sm text-gray-600 mt-1">FG%</div>
+            </div>
+            <div class="text-center p-4 bg-blue-50 rounded-lg">
+                <div class="text-3xl font-bold text-blue-900">{{ career_stats.three_point_pct|format_stat }}%</div>
+                <div class="text-sm text-gray-600 mt-1">3P%</div>
+            </div>
+            <div class="text-center p-4 bg-blue-50 rounded-lg">
+                <div class="text-3xl font-bold text-blue-900">{{ career_stats.free_throw_pct|format_stat }}%</div>
+                <div class="text-sm text-gray-600 mt-1">FT%</div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Season-by-Season Stats -->
+    {% if season_stats %}
+    <div class="bg-white rounded-lg shadow-lg p-6">
+        <h2 class="text-2xl font-bold text-blue-900 mb-4 border-b-2 border-blue-900 pb-2">
+            Season-by-Season Stats
+        </h2>
+        <div class="overflow-x-auto">
+            <table class="w-full stat-table">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Season</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Team</th>
+                        <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700">GP</th>
+                        <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700">MPG</th>
+                        <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700">PPG</th>
+                        <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700">RPG</th>
+                        <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700">APG</th>
+                        <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700">SPG</th>
+                        <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700">BPG</th>
+                        <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700">FG%</th>
+                        <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700">3P%</th>
+                        <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700">FT%</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% for season in season_stats %}
+                    <tr class="hover:bg-blue-50 stat-row">
+                        <td class="px-4 py-3 text-sm font-medium">
+                            <a href="/players/{{ player.player_id }}/gamelog?season={{ season.season_id }}" class="text-blue-600 hover:underline">
+                                {{ season.season_id|format_season }}
+                            </a>
+                        </td>
+                        <td class="px-4 py-3 text-sm">{{ season.team_abbreviation or '-' }}</td>
+                        <td class="px-4 py-3 text-sm text-center">{{ season.games_played }}</td>
+                        <td class="px-4 py-3 text-sm text-center">{{ season.minutes_per_game|format_stat }}</td>
+                        <td class="px-4 py-3 text-sm text-center font-semibold">{{ season.points_per_game|format_stat }}</td>
+                        <td class="px-4 py-3 text-sm text-center">{{ season.rebounds_per_game|format_stat }}</td>
+                        <td class="px-4 py-3 text-sm text-center">{{ season.assists_per_game|format_stat }}</td>
+                        <td class="px-4 py-3 text-sm text-center">{{ season.steals_per_game|format_stat }}</td>
+                        <td class="px-4 py-3 text-sm text-center">{{ season.blocks_per_game|format_stat }}</td>
+                        <td class="px-4 py-3 text-sm text-center">{{ season.field_goal_pct|format_stat }}</td>
+                        <td class="px-4 py-3 text-sm text-center">{{ season.three_point_pct|format_stat }}</td>
+                        <td class="px-4 py-3 text-sm text-center">{{ season.free_throw_pct|format_stat }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Back to Search -->
+    <div>
+        <a href="/players/search" class="text-blue-600 hover:underline">
+            ← Back to Player Search
+        </a>
+    </div>
+</div>
+{% endblock %}

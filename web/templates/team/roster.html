@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}{{ team.team_name }} Roster - NBA Hub{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- Team Header -->
+    <div class="bg-white rounded-lg shadow-lg p-6">
+        <div class="flex items-start justify-between">
+            <div>
+                <h1 class="text-4xl font-bold text-blue-900 mb-2">{{ team.team_name }}</h1>
+                <p class="text-xl text-gray-600">Team Roster</p>
+                {% if team.city %}
+                <p class="text-gray-600 mt-2">{{ team.city }}{% if team.state %}, {{ team.state }}{% endif %}</p>
+                {% endif %}
+            </div>
+            <div class="flex gap-2">
+                <a href="/teams/{{ team.team_id }}/schedule" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">
+                    Schedule
+                </a>
+                <a href="/teams/{{ team.team_id }}" class="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition">
+                    Overview
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Season Selector -->
+    {% if available_seasons %}
+    <div class="bg-white rounded-lg shadow-lg p-6">
+        <label for="season-select" class="block text-sm font-semibold text-gray-700 mb-2">
+            Select Season:
+        </label>
+        <select
+            id="season-select"
+            class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            onchange="window.location.href = '/teams/{{ team.team_id }}/roster?season=' + this.value"
+        >
+            {% for season in available_seasons %}
+            <option value="{{ season }}" {% if season == selected_season %}selected{% endif %}>
+                {{ season|format_season }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+    {% endif %}
+
+    <!-- Roster Table -->
+    {% if roster %}
+    <div class="bg-white rounded-lg shadow-lg p-6">
+        <h2 class="text-2xl font-bold text-blue-900 mb-4 border-b-2 border-blue-900 pb-2">
+            Players ({{ roster|length }})
+        </h2>
+        <div class="overflow-x-auto">
+            <table class="w-full stat-table">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Player</th>
+                        <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700">Position</th>
+                        <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700">Height</th>
+                        <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700">Weight</th>
+                        <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700">Age</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% for player in roster %}
+                    <tr class="hover:bg-blue-50 stat-row">
+                        <td class="px-4 py-3 text-sm">
+                            <a href="/players/{{ player.player_id }}" class="text-blue-600 hover:underline font-medium">
+                                {{ player.player_name }}
+                            </a>
+                        </td>
+                        <td class="px-4 py-3 text-sm text-center">
+                            {% if player.position %}
+                            <span class="badge badge-blue">{{ player.position }}</span>
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-sm text-center">{{ player.height|format_height }}</td>
+                        <td class="px-4 py-3 text-sm text-center">{{ player.weight|format_weight }}</td>
+                        <td class="px-4 py-3 text-sm text-center">{{ player.age if player.age else '-' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-3 rounded-lg">
+        <p>No roster data available for the selected season.</p>
+    </div>
+    {% endif %}
+
+    <!-- Back to Teams -->
+    <div>
+        <a href="/teams" class="text-blue-600 hover:underline">
+            ← Back to All Teams
+        </a>
+    </div>
+</div>
+{% endblock %}

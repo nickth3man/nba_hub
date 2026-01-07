@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}Player Search - NBA Hub{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- Search Header -->
+    <div class="bg-white rounded-lg shadow-lg p-6">
+        <h1 class="text-4xl font-bold text-blue-900 mb-4">Player Search</h1>
+        <form method="get" action="/players/search" class="flex gap-2">
+            <input
+                type="text"
+                name="q"
+                value="{{ query }}"
+                placeholder="Search by player name..."
+                class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                autofocus
+            >
+            <button
+                type="submit"
+                class="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition font-semibold"
+            >
+                Search
+            </button>
+        </form>
+    </div>
+
+    <!-- Search Results -->
+    {% if query %}
+        {% if results %}
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h2 class="text-2xl font-bold text-blue-900 mb-4 border-b-2 border-blue-900 pb-2">
+                Search Results ({{ results|length }})
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {% for player in results %}
+                <a
+                    href="/players/{{ player.player_id }}"
+                    class="block p-4 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition card-hover"
+                >
+                    <h3 class="text-lg font-bold text-blue-900">{{ player.player_name }}</h3>
+                    <div class="mt-2 text-sm text-gray-600">
+                        {% if player.position %}
+                        <span class="badge badge-blue">{{ player.position }}</span>
+                        {% endif %}
+                        {% if player.from_year and player.to_year %}
+                        <span class="ml-2">{{ player.from_year }} - {{ player.to_year }}</span>
+                        {% endif %}
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% else %}
+        <div class="bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-3 rounded-lg">
+            <p>No players found matching "{{ query }}". Try a different search term.</p>
+        </div>
+        {% endif %}
+    {% else %}
+    <div class="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-lg">
+        <p>Enter a player name to search. You can search by first name, last name, or full name.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
