@@ -1,1 +1,0 @@
-"""NBA Hub Web Application"""

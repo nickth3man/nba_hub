@@ -1,5 +1,0 @@
-fk_table,fk_column,pk_table,pk_column,orphan_count,total_count,integrity_percentage
-team_game_stats,team_id,team,id,2520,131284,98.08
-team_game_stats,game_id,games,game_id,0,140456,100.0
-player_game_stats,game_id,games,game_id,0,0,100.0
-common_player_info,team_id,team,id,929,4171,77.73
