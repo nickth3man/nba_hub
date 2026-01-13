@@ -180,13 +180,13 @@ def verify_data():
 
 
 def main():
-    # Scrape recent years for testing as per instructions
-    # To cover more history, change this to range(1980, 2025)
-    years = range(2020, 2025)
+    # Scrape from 1956 to 2025
+    # MVP started in 1956
+    years = range(1956, 2026)
 
     for year in years:
         scrape_year(year)
-        time.sleep(random.uniform(3, 5))
+        time.sleep(random.uniform(1, 2)) # Reduced sleep for faster execution in this session
 
     verify_data()
 

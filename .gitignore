@@ -2,3 +2,5 @@
 /.opencode
 /.ruff_cache
 /.mypy_cache
+.mcp.json
+
