@@ -1,1 +1,4 @@
-data/*.csv
+*.csv
+/.opencode
+/.ruff_cache
+/.mypy_cache
