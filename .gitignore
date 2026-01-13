@@ -39,3 +39,4 @@ node_modules/
 
 # Logs
 *.log
+.mcp.json
