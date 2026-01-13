@@ -41,3 +41,5 @@ node_modules/
 *.log
 .mcp.json
 /.opencode
+/data/nba.duckdb
+/data/raw
