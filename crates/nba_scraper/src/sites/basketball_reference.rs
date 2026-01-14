@@ -1,5 +1,5 @@
 use scraper::{Html, Selector};
-use anyhow::{Result, Context};
+use anyhow::Result;
 use crate::ScraperClient;
 use nba_core::schema::{Referee, Coach};
 use regex::Regex;

@@ -107,12 +107,134 @@ pub struct PlayerBoxscore {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TeamBoxscore {
+    pub game_id: String,
+    pub team_id: i64,
+    pub minutes: Option<f64>,
+    pub points: Option<i32>,
+    pub assists: Option<i32>,
+    pub rebounds_total: Option<i32>,
+    pub fgm: Option<i32>,
+    pub fga: Option<i32>,
+    pub fg3m: Option<i32>,
+    pub fg3a: Option<i32>,
+    pub ftm: Option<i32>,
+    pub fta: Option<i32>,
+    pub turnovers: Option<i32>,
+    pub pf: Option<i32>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Draft {
     pub season_year: i32,
     pub pick_overall: i32,
     pub round_number: Option<i32>,
     pub pick_in_round: Option<i32>,
-    pub team_id: Option<i64>,
-    pub player_id: Option<i64>,
+    pub team_abbrev: Option<String>,
+    pub player_bref_id: Option<String>,
+    pub player_name: Option<String>,
     pub college: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PlayerSeasonTotal {
+    pub season_year: i32,
+    pub player_bref_id: String,
+    pub team_abbrev: String,
+    pub games: i32,
+    pub games_started: Option<i32>,
+    pub minutes: Option<f64>,
+    pub points: Option<i32>,
+    pub assists: Option<i32>,
+    pub rebounds_total: Option<i32>,
+    pub steals: Option<i32>,
+    pub blocks: Option<i32>,
+    pub fgm: Option<i32>,
+    pub fga: Option<i32>,
+    pub fg3m: Option<i32>,
+    pub fg3a: Option<i32>,
+    pub ftm: Option<i32>,
+    pub fta: Option<i32>,
+    pub turnovers: Option<i32>,
+    pub pf: Option<i32>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PlayerSeasonAdvanced {
+    pub season_year: i32,
+    pub player_bref_id: String,
+    pub team_abbrev: String,
+    pub minutes: Option<f64>,
+    pub per: Option<f64>,
+    pub ts_percent: Option<f64>,
+    pub usg_percent: Option<f64>,
+    pub ows: Option<f64>,
+    pub dws: Option<f64>,
+    pub ws: Option<f64>,
+    pub bpm: Option<f64>,
+    pub vorp: Option<f64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TeamSeasonTotal {
+    pub season_year: i32,
+    pub team_abbrev: String,
+    pub games: i32,
+    pub minutes: Option<f64>,
+    pub points: Option<i32>,
+    pub assists: Option<i32>,
+    pub rebounds_total: Option<i32>,
+    pub fgm: Option<i32>,
+    pub fga: Option<i32>,
+    pub fg3m: Option<i32>,
+    pub fg3a: Option<i32>,
+    pub ftm: Option<i32>,
+    pub fta: Option<i32>,
+    pub turnovers: Option<i32>,
+    pub pf: Option<i32>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TeamSeasonAdvanced {
+    pub season_year: i32,
+    pub team_abbrev: String,
+    pub wins: i32,
+    pub losses: i32,
+    pub srs: Option<f64>,
+    pub pace: Option<f64>,
+    pub off_rtg: Option<f64>,
+    pub def_rtg: Option<f64>,
+    pub net_rtg: Option<f64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Standing {
+    pub season_year: i32,
+    pub team_abbrev: String,
+    pub wins: i32,
+    pub losses: i32,
+    pub playoffs: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Award {
+    pub award_key: String,
+    pub award_type: String,
+    pub season_year: i32,
+    pub player_bref_id: Option<String>,
+    pub player_name: Option<String>,
+    pub team_abbrev: Option<String>,
+    pub rank: Option<i32>,
+    pub points_won: Option<i32>,
+    pub points_max: Option<i32>,
+    pub share: Option<f64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Transaction {
+    pub transaction_id: String,
+    pub season_year: i32,
+    pub team_abbrev: Option<String>,
+    pub player_bref_id: Option<String>,
+    pub details: String,
 }

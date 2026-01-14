@@ -1,32 +1,27 @@
 # Configuration
 
-Currently, the NBA Data Hub is configured primarily through Python files.
-
-## File Paths
-
-File paths and directory structures are defined in `src/core/config.py`.
-
-- **`BASE_DIR`**: The root directory of the project.
-- **`DATA_DIR`**: `data/` - Root for all data files.
-- **`RAW_DATA_DIR`**: `data/raw/` - Location for CSV and JSON files.
-- **`DB_PATH`**: `data/nba.duckdb` - The DuckDB database file.
-- **`SCRAPER_DATA_DIR`**: `data/raw/html` - Directory for scraped HTML files.
-- **`GAMES_CSV`**: `data/raw/Games.csv` - Path to the raw games CSV.
-- **`TEAM_HISTORIES_CSV`**: `data/raw/TeamHistories.csv` - Path to team history data.
-- **`PLAYERS_CSV`**: `data/raw/Players.csv` - Path to raw player data.
-- **`PLAYER_STATISTICS_CSV`**: `data/raw/PlayerStatistics.csv` - Path to player stats.
-
-If you need to change where data is stored, modify `src/core/config.py`.
-
-## Database
-
-The database connection is managed in `src/core/database.py`. It uses the `DB_PATH` from the config file.
+NBA Hub uses environment variables for Convex access and local paths for CSV/DuckDB.
 
 ## Environment Variables
 
-The project includes `python-dotenv` in `requirements.txt`, but currently, no environment variables are strictly required for the core pipeline. Future updates may add support for API keys (e.g., for NBA API) via `.env` files.
+Create a `.env` or `.env.local` at the repo root:
 
-## Dependencies
+- **`CONVEX_URL`**: Base URL for Convex (default `http://localhost:3210`).
+- **`CONVEX_ADMIN_KEY`**: Admin key for mutations (required for writes).
+- **`DUCKDB_PATH`**: Override DuckDB path (default `data/nba.duckdb`).
 
-Python dependencies are managed in `requirements.txt`.
-Playwright browsers are managed via the `playwright` CLI.
+## Data Paths
+
+Rust configuration lives in `crates/nba_core/src/config.rs`:
+
+- `data/` for local artifacts.
+- `data/raw/` for CSV/JSON sources used during seed/backfill.
+- `data/nba.duckdb` for validation queries.
+
+## Convex Configuration
+
+Convex schema and functions live in `convex/`. Use `npx convex dev` for local dev and `npx convex deploy` for production.
+
+## Legacy Python
+
+Python configuration under `src/core/config.py` is legacy and not used by the Rust pipeline.

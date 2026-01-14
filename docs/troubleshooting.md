@@ -1,39 +1,29 @@
 # Troubleshooting
 
-Common issues and solutions for the NBA Data Hub.
+Common issues and fixes for the Rust + Convex pipeline.
 
-## Installation Issues
+## Convex Issues
 
-### `ModuleNotFoundError`
-**Issue**: Python cannot find a module (e.g., `ModuleNotFoundError: No module named 'duckdb'`).
-**Solution**: Ensure you have installed the dependencies in your active virtual environment.
-```bash
-pip install -r requirements.txt
-```
+### `401 Unauthorized` on mutations
+**Cause**: Missing or invalid `CONVEX_ADMIN_KEY`.
+**Fix**: Set `CONVEX_ADMIN_KEY` in `.env.local` and restart the ETL.
 
-### Playwright Errors
-**Issue**: `playwright._impl._api_types.Error: Executable doesn't exist at ...`
-**Solution**: You need to install the browser binaries for Playwright.
-```bash
-playwright install
-```
+### `ECONNREFUSED` to Convex
+**Cause**: Convex dev server not running.
+**Fix**: Run `npx convex dev` and retry.
 
-## Runtime Issues
+## ETL Issues
 
-### Database Locked
-**Issue**: `duckdb.IOException: IO Error: Cannot open file ".../nba.duckdb": The process cannot access the file because it is being used by another process.`
-**Solution**: DuckDB allows only one writer at a time. Ensure no other scripts or DBeaver/DataGrip connections are holding a write lock on the database file. Close other connections and try again.
+### CSV file not found
+**Cause**: `--csv-dir` points to the wrong path.
+**Fix**: Ensure `data/raw` exists and pass the correct directory.
 
-### Scraping Failures
-**Issue**: Scrapers fail with timeouts or 403 errors.
-**Solution**:
-- Check your internet connection.
-- Some sites may rate-limit scraping. The scrapers use Playwright to mimic a real browser, but aggressive scraping can still trigger blocks.
-- Try running the specific scraper script individually to debug.
+### Validation fails with missing tables
+**Cause**: DuckDB not populated.
+**Fix**: Run `seed` and `backfill` first, or point to the correct DuckDB file.
 
-### Missing Data
-**Issue**: Tables are empty after running `run_all.py`.
-**Solution**:
-- Check the logs for `[FAIL]` messages.
-- Ensure `run_init.py` was run first.
-- Verify that `data/raw` contains the expected CSV files.
+## Scraper Issues
+
+### 429/5xx errors
+**Cause**: Rate limits.
+**Fix**: Increase `--delay-ms` or lower `--concurrency`.

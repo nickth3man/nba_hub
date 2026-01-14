@@ -1,4 +1,4 @@
-# PRD: NBA Hub (Rust + Convex + DuckDB) Basketball-Reference Clone
+# PRD: NBA Hub (Rust + Convex + DuckDB) Basketball-Reference Clone (Strategic)
 
 Version: 1.1
 Status: Finalized
@@ -179,3 +179,17 @@ Target behavior:
 - **Hosting**: Github Actions for nightly jobs. No VPS.
 - **Retention**: Raw JSON stored. Raw HTML deleted.
 - **Precision**: Integer storage for counts. Floats for averages with display rounding.
+
+## 21) References
+
+### Implementation Details Location
+| Content Type | Location |
+|--------------|----------|
+| Anti-patterns | [Implementation Spec, Section 9](IMPLEMENTATION_SPEC.md#9-anti-patterns-do-not) |
+| Test Cases | [Implementation Spec, Section 10](IMPLEMENTATION_SPEC.md#10-test-case-specifications) |
+| Error Handling | [Implementation Spec, Section 11](IMPLEMENTATION_SPEC.md#11-error-handling-matrix) |
+
+### Schema References
+| Topic | Location | Anchor |
+|-------|----------|--------|
+| Convex schema | [convex/schema.ts](../convex/schema.ts) | `defineSchema` |

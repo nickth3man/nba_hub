@@ -8,14 +8,19 @@ on:
 jobs:
   scrape:
     runs-on: ubuntu-latest
+    env:
+      SCRAPER_USER_AGENT: NBA Hub Scraper (nba-hub-bot)
+      CONVEX_URL: ${{ secrets.CONVEX_URL }}
+      CONVEX_ADMIN_KEY: ${{ secrets.CONVEX_ADMIN_KEY }}
     steps:
     - uses: actions/checkout@v3
     - name: Install Rust
       uses: dtolnay/rust-toolchain@stable
     - name: Build ETL
       run: cargo build --release --bin nba_etl
-    - name: Run ETL
-      run: ./target/release/nba_etl
-      env:
-        CONVEX_DEPLOYMENT: ${{ secrets.CONVEX_DEPLOYMENT }}
-        CONVEX_URL: ${{ secrets.CONVEX_URL }}
+    - name: Run Seed
+      run: ./target/release/nba_etl seed --csv-dir data/raw --batch-size 200
+    - name: Run Backfill
+      run: |
+        YESTERDAY=$(date -u -d "yesterday" +%Y%m%d)
+        ./target/release/nba_etl backfill --start-date $YESTERDAY --end-date $YESTERDAY --concurrency 1 --delay-ms 3000

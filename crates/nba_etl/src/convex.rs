@@ -1,9 +1,33 @@
-use std::env;
 use reqwest::Client;
 use serde::Serialize;
 use serde_json::Value;
-use anyhow::{Result, Context};
+use anyhow::Result;
 use log::info;
+use nba_core::config;
+
+#[derive(Debug)]
+pub struct ConvexError {
+    status: u16,
+    body: String,
+}
+
+impl ConvexError {
+    pub fn new(status: u16, body: String) -> Self {
+        Self { status, body }
+    }
+
+    pub fn is_payload_limit(&self) -> bool {
+        self.status == 413 || self.body.to_lowercase().contains("limit")
+    }
+}
+
+impl std::fmt::Display for ConvexError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Convex request failed (status {}): {}", self.status, self.body)
+    }
+}
+
+impl std::error::Error for ConvexError {}
 
 pub struct ConvexClient {
     client: Client,
@@ -13,8 +37,8 @@ pub struct ConvexClient {
 
 impl ConvexClient {
     pub fn new() -> Result<Self> {
-        let url = env::var("CONVEX_URL").unwrap_or_else(|_| "http://localhost:3210".to_string());
-        let admin_key = env::var("CONVEX_ADMIN_KEY").ok();
+        let url = config::convex_url();
+        let admin_key = config::convex_admin_key();
         
         info!("Using Convex URL: {}", url);
         if admin_key.is_some() {
@@ -52,8 +76,9 @@ impl ConvexClient {
             .await?;
 
         if !response.status().is_success() {
-            let text = response.text().await?;
-            return Err(anyhow::anyhow!("Convex mutation failed: {}", text));
+            let status = response.status().as_u16();
+            let text = response.text().await.unwrap_or_default();
+            return Err(ConvexError::new(status, text).into());
         }
 
         let result: Value = response.json().await?;
@@ -83,8 +108,9 @@ impl ConvexClient {
             .await?;
 
         if !response.status().is_success() {
-            let text = response.text().await?;
-            return Err(anyhow::anyhow!("Convex query failed: {}", text));
+            let status = response.status().as_u16();
+            let text = response.text().await.unwrap_or_default();
+            return Err(ConvexError::new(status, text).into());
         }
 
         let result: Value = response.json().await?;

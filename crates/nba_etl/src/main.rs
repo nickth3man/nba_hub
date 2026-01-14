@@ -1,6 +1,8 @@
 mod convex;
+mod seed;
 mod backfill;
 mod validation;
+mod csv_utils;
 
 use dotenv::dotenv;
 use log::{info, error};
@@ -17,10 +19,13 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
+    Seed(seed::Args),
     Backfill(BackfillArgs),
     Validate {
         #[arg(long, default_value = "data/nba.duckdb")]
         db_path: String,
+        #[arg(long, default_value = "data/raw")]
+        csv_dir: String,
     },
 }
 
@@ -32,6 +37,13 @@ async fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
     
     match cli.command {
+        Commands::Seed(args) => {
+            info!("Starting CSV seed...");
+            if let Err(e) = seed::run_seed(args).await {
+                error!("Seed failed: {}", e);
+                std::process::exit(1);
+            }
+        }
         Commands::Backfill(args) => {
             info!("Starting NBA ETL Backfill...");
             if let Err(e) = backfill::run_backfill(args).await {
@@ -39,11 +51,11 @@ async fn main() -> anyhow::Result<()> {
                 std::process::exit(1);
             }
         }
-        Commands::Validate { db_path } => {
+        Commands::Validate { db_path, csv_dir } => {
             info!("Starting Validation...");
             // Validation is synchronous (DuckDB)
             if let Err(e) = tokio::task::spawn_blocking(move || {
-                validation::validate_team_totals(&db_path)
+                validation::run_validations(&db_path, &csv_dir)
             }).await? {
                 error!("Validation failed: {}", e);
                 std::process::exit(1);
