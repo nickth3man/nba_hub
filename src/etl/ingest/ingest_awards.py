@@ -109,7 +109,9 @@ def ingest_awards():
     JOIN unified_players p ON LOWER(p.display_name) = LOWER(ra.player)
     """)
 
-    count = con.execute("SELECT count(*) FROM unified_award_results").fetchone()[0]
+    res = con.execute("SELECT count(*) FROM unified_award_results")
+    row = res.fetchone()
+    count = row[0] if row else 0
     print(f"Total award results: {count}")
     con.close()
 

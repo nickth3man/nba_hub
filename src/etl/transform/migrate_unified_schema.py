@@ -15,6 +15,7 @@ def migrate():
         "unified_award_results",
         "unified_season_awards",
         "unified_awards",
+        "unified_player_season_advanced",
         "unified_player_boxscores",
         "unified_games",
         "unified_team_history",
@@ -90,7 +91,9 @@ def migrate():
       first_name         VARCHAR,
       last_name          VARCHAR,
       display_name       VARCHAR,
-      birth_date         DATE
+      birth_date         DATE,
+      from_year          INTEGER,
+      to_year            INTEGER
     );
     """)
 
@@ -147,6 +150,19 @@ def migrate():
       turnovers          INTEGER,
       plus_minus         INTEGER,
       PRIMARY KEY (game_id, player_id)
+    );
+    """)
+
+    con.execute("""
+    CREATE TABLE unified_drafts (
+        season_year      INTEGER NOT NULL,
+        pick_overall     INTEGER NOT NULL,
+        round_number     INTEGER,
+        pick_in_round    INTEGER,
+        team_id          BIGINT REFERENCES unified_teams(team_id),
+        player_id        BIGINT REFERENCES unified_players(player_id),
+        college          VARCHAR,
+        PRIMARY KEY (season_year, pick_overall)
     );
     """)
 
@@ -240,6 +256,33 @@ def migrate():
         plusMinusPoints
     FROM raw_player_box_scores pb
     JOIN raw_games g ON CAST(pb.gameId AS VARCHAR) = CAST(g.gameId AS VARCHAR)
+    """)
+
+    print("Migrating coaches...")
+    con.execute("""
+    INSERT INTO unified_coaches (coach_id, display_name)
+    SELECT DISTINCT coach_id, coach_name
+    FROM coach_season_summary
+    WHERE coach_id IS NOT NULL
+    ON CONFLICT (coach_id) DO UPDATE SET display_name = EXCLUDED.display_name
+    """)
+
+    # 7. Drafts
+    print("Migrating drafts...")
+    con.execute("""
+    INSERT INTO unified_drafts (season_year, pick_overall, round_number, pick_in_round, team_id, player_id, college)
+    SELECT 
+        dh.season_year,
+        dh.pick_overall,
+        dh.round_number,
+        dh.pick_in_round,
+        t.team_id,
+        p.player_id,
+        dh.college
+    FROM draft_history dh
+    LEFT JOIN unified_team_history t ON dh.team_id = t.abbreviation
+    LEFT JOIN unified_players p ON LOWER(dh.player_name) = LOWER(p.display_name)
+    QUALIFY ROW_NUMBER() OVER (PARTITION BY dh.season_year, dh.pick_overall ORDER BY t.is_active DESC, t.effective_end DESC NULLS FIRST) = 1
     """)
 
     con.close()

@@ -74,9 +74,9 @@ def ingest_advanced_stats():
     JOIN unified_team_history t ON ra.Tm = t.abbreviation
     """)
 
-    count = con.execute(
-        "SELECT count(*) FROM unified_player_season_advanced"
-    ).fetchone()[0]
+    res = con.execute("SELECT count(*) FROM unified_player_season_advanced")
+    row = res.fetchone()
+    count = row[0] if row else 0
     print(f"Total advanced records ingested: {count}")
     con.close()
 

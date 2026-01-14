@@ -16,7 +16,8 @@ def ingest_transactions():
 
     con = get_db_connection()
 
-    # Create unified_transactions table
+    con.execute("DROP TABLE IF EXISTS unified_transactions")
+
     con.execute("""
     CREATE TABLE IF NOT EXISTS unified_transactions (
         transaction_id INTEGER PRIMARY KEY,
@@ -49,7 +50,9 @@ def ingest_transactions():
     FROM raw_trans rt
     """)
 
-    count = con.execute("SELECT count(*) FROM unified_transactions").fetchone()[0]
+    res = con.execute("SELECT count(*) FROM unified_transactions")
+    row = res.fetchone()
+    count = row[0] if row else 0
     print(f"Total transactions ingested: {count}")
     con.close()
 

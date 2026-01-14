@@ -14,7 +14,7 @@ This script scrapes game data for the BAA/NBA seasons from 1947 to 1955 from Bas
 1.  **Run the script:**
 
     ```bash
-    python src/scraping/backfill_early_games.py
+    python src/etl/ingest/backfill_early_games.py
     ```
 
     This will:
@@ -28,7 +28,7 @@ This script scrapes game data for the BAA/NBA seasons from 1947 to 1955 from Bas
     To test the scraping for 1947 without saving data:
 
     ```bash
-    python src/scraping/backfill_early_games.py --dry-run
+    python src/etl/ingest/backfill_early_games.py --dry-run
     ```
 
 ## Verification
@@ -36,7 +36,7 @@ This script scrapes game data for the BAA/NBA seasons from 1947 to 1955 from Bas
 After running the script, you can verify the data using the provided check script:
 
 ```bash
-python check_games.py
+python scripts/check_games.py
 ```
 
 Expected output should show game counts for years 1946-1955 (approx 300-500 per season).
