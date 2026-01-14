@@ -1,0 +1,7 @@
+[workspace]
+members = [
+    "crates/nba_core",
+    "crates/nba_scraper",
+    "crates/nba_etl",
+]
+resolver = "2"

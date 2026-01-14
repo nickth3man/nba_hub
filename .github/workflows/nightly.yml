@@ -1,0 +1,21 @@
+name: Nightly Scrape
+
+on:
+  schedule:
+    - cron: '0 9 * * *'
+  workflow_dispatch:
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+    - name: Build ETL
+      run: cargo build --release --bin nba_etl
+    - name: Run ETL
+      run: ./target/release/nba_etl
+      env:
+        CONVEX_DEPLOYMENT: ${{ secrets.CONVEX_DEPLOYMENT }}
+        CONVEX_URL: ${{ secrets.CONVEX_URL }}
