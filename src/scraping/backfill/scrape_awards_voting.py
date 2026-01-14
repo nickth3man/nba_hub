@@ -1,3 +1,4 @@
+import argparse
 import time
 from playwright.sync_api import sync_playwright
 from bs4 import BeautifulSoup, Tag
@@ -12,7 +13,7 @@ def fetch_page(page, url):
     return page
 
 
-def scrape_awards_voting():
+def scrape_awards_voting(start_year=2020, end_year=None):
     con = get_db_connection()
 
     # Create table for voting results
@@ -51,10 +52,14 @@ def scrape_awards_voting():
     ).fetchall()
     years = [s[0] for s in seasons]
 
-    # Filter years (start from 1955 for MVP, others later)
-    years = [y for y in years if y >= 2020]  # Test with recent years first
+    if start_year:
+        years = [y for y in years if y >= start_year]
+    if end_year:
+        years = [y for y in years if y <= end_year]
 
-    print(f"Scraping awards voting for {len(years)} seasons...")
+    print(
+        f"Scraping awards voting for {len(years)} seasons (Start: {start_year}, End: {end_year})..."
+    )
 
     awards_map = {
         "mvp": "MVP",
@@ -230,4 +235,11 @@ def scrape_awards_voting():
 
 
 if __name__ == "__main__":
-    scrape_awards_voting()
+    parser = argparse.ArgumentParser(description="Scrape NBA awards voting history")
+    parser.add_argument(
+        "--start-year", type=int, default=2020, help="Start year (default: 2020)"
+    )
+    parser.add_argument("--end-year", type=int, help="End year (optional)")
+    args = parser.parse_args()
+
+    scrape_awards_voting(start_year=args.start_year, end_year=args.end_year)

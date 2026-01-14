@@ -39,13 +39,13 @@ def get_teams(season_year=None):
 
 def get_player_search(name_query):
     con = get_db_connection()
-    query = f"""
+    query = """
         SELECT player_id, display_name, from_year, to_year 
         FROM unified_players 
-        WHERE LOWER(display_name) LIKE '%{name_query.lower()}%'
+        WHERE LOWER(display_name) LIKE ?
         LIMIT 20
     """
-    df = con.execute(query).fetchdf()
+    df = con.execute(query, [f"%{name_query.lower()}%"]).fetchdf()
     con.close()
     return df
 
@@ -54,14 +54,14 @@ def get_player_profile(player_id):
     con = get_db_connection()
     # Basic info
     info = con.execute(
-        f"SELECT * FROM unified_players WHERE player_id = {player_id}"
+        "SELECT * FROM unified_players WHERE player_id = ?", [player_id]
     ).fetchdf()
 
     # Season Stats (Totals)
     # We need to aggregate boxscores if we don't have a pre-calculated totals table
     # But we have unified_player_season_advanced.
     # Let's aggregate boxscores for basic stats.
-    stats_query = f"""
+    stats_query = """
         SELECT 
             s.season_year,
             t.abbreviation as team,
@@ -79,11 +79,11 @@ def get_player_profile(player_id):
         JOIN unified_games g ON pb.game_id = g.game_id
         JOIN unified_seasons s ON g.season_id = s.season_id
         JOIN unified_team_history t ON pb.team_id = t.team_id
-        WHERE pb.player_id = {player_id}
+        WHERE pb.player_id = ?
         GROUP BY s.season_year, t.abbreviation
         ORDER BY s.season_year DESC
     """
-    stats = con.execute(stats_query).fetchdf()
+    stats = con.execute(stats_query, [player_id]).fetchdf()
 
     con.close()
     return info, stats
@@ -95,7 +95,7 @@ def get_standings(season_year):
 
     # This is complex. We need to sum wins/losses for each team in the given season.
     # Simplified version:
-    query = f"""
+    query = """
         WITH team_games AS (
             SELECT 
                 home_team_id as team_id,
@@ -103,7 +103,7 @@ def get_standings(season_year):
                 1 as game
             FROM unified_games g
             JOIN unified_seasons s ON g.season_id = s.season_id
-            WHERE s.season_year = {season_year} AND g.season_type = 'REG'
+            WHERE s.season_year = ? AND g.season_type = 'REG'
             
             UNION ALL
             
@@ -113,7 +113,7 @@ def get_standings(season_year):
                 1 as game
             FROM unified_games g
             JOIN unified_seasons s ON g.season_id = s.season_id
-            WHERE s.season_year = {season_year} AND g.season_type = 'REG'
+            WHERE s.season_year = ? AND g.season_type = 'REG'
         )
         SELECT 
             th.city || ' ' || th.nickname as team_name,
@@ -125,6 +125,6 @@ def get_standings(season_year):
         GROUP BY th.city, th.nickname
         ORDER BY pct DESC
     """
-    df = con.execute(query).fetchdf()
+    df = con.execute(query, [season_year, season_year]).fetchdf()
     con.close()
     return df
