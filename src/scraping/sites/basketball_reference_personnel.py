@@ -1,7 +1,7 @@
 import random
 import time
 
-import requests
+from playwright.sync_api import sync_playwright
 from bs4 import BeautifulSoup
 
 from src.core.database import get_db_connection
@@ -11,24 +11,28 @@ def scrape_coaches():
     url = "https://www.basketball-reference.com/coaches/NBA_stats.html"
     print(f"Scraping coaches from {url}...")
 
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-    }
-
     try:
-        response = requests.get(url, headers=headers)
-        response.raise_for_status()
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            page = browser.new_page()
+            page.goto(url, timeout=60000)
+            content = page.content()
+            browser.close()
     except Exception as e:
         print(f"Error fetching coaches: {e}")
         return
 
-    soup = BeautifulSoup(response.content, "html.parser")
+    soup = BeautifulSoup(content, "html.parser")
     table = soup.find("table", {"id": "coaches"})
     if not table:
         print("Could not find coaches table.")
         return
 
     tbody = table.find("tbody")
+    if not tbody:
+        print("Could not find tbody for coaches.")
+        return
+
     rows = []
     for tr in tbody.find_all("tr"):
         if "class" in tr.attrs and "thead" in tr.attrs["class"]:
@@ -69,18 +73,18 @@ def scrape_referees():
     url = "https://www.basketball-reference.com/referees/"
     print(f"Scraping referees from {url}...")
 
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-    }
-
     try:
-        response = requests.get(url, headers=headers)
-        response.raise_for_status()
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            page = browser.new_page()
+            page.goto(url, timeout=60000)
+            content = page.content()
+            browser.close()
     except Exception as e:
         print(f"Error fetching referees: {e}")
         return
 
-    soup = BeautifulSoup(response.content, "html.parser")
+    soup = BeautifulSoup(content, "html.parser")
     # Referees are in a table with id "referees"
     table = soup.find("table", {"id": "referees"})
     if not table:
@@ -88,6 +92,10 @@ def scrape_referees():
         return
 
     tbody = table.find("tbody")
+    if not tbody:
+        print("Could not find tbody for referees.")
+        return
+
     rows = []
     for tr in tbody.find_all("tr"):
         if "class" in tr.attrs and "thead" in tr.attrs["class"]:
@@ -111,9 +119,10 @@ def scrape_referees():
     )
 
     print(f"Inserting {len(rows)} referees...")
-    con.executemany(
-        "INSERT OR IGNORE INTO referees (referee_id, name) VALUES (?, ?)", rows
-    )
+    if rows:
+        con.executemany(
+            "INSERT OR IGNORE INTO referees (referee_id, name) VALUES (?, ?)", rows
+        )
     con.close()
     print("Referees ingestion complete.")
 
