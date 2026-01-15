@@ -1,2 +1,25 @@
+pub mod awards;
+pub mod draft;
+pub mod glossary;
+pub mod home;
+pub mod leaders;
+pub mod player_profile;
 pub mod players;
+pub mod season_detail;
+pub mod seasons;
+pub mod team_profile;
 pub mod teams;
+pub mod transactions;
+
+pub use awards::AwardsPage;
+pub use draft::DraftPage;
+pub use glossary::GlossaryPage;
+pub use home::Home;
+pub use leaders::LeadersPage;
+pub use player_profile::PlayerProfile;
+pub use players::Players;
+pub use season_detail::SeasonDetail;
+pub use seasons::SeasonsIndex;
+pub use team_profile::TeamProfile;
+pub use teams::Teams;
+pub use transactions::TransactionsPage;

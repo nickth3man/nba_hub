@@ -1,12 +1,13 @@
 use std::collections::HashMap;
+use std::collections::HashSet;
 use std::path::PathBuf;
 
 use anyhow::{Context, Result};
+use chrono::Datelike;
 use clap::Parser;
 use csv::ReaderBuilder;
 use log::{info, warn};
 use serde::Deserialize;
-use chrono::Datelike;
 
 use nba_core::awards::build_award_key;
 use nba_core::schema::{
@@ -35,17 +36,44 @@ pub async fn run_seed(args: Args) -> Result<()> {
     seed_reference_data(&convex, args.batch_size).await?;
 
     let (team_history, team_map, history_spans) = load_team_history(&csv_dir)?;
-    send_batches(&convex, "ingest:upsertTeamHistory", "history", team_history, args.batch_size)
-        .await?;
+    send_batches(
+        &convex,
+        "ingest:upsertTeamHistory",
+        "history",
+        team_history,
+        args.batch_size,
+    )
+    .await?;
     let teams = build_teams_from_history(&team_map);
-    send_batches(&convex, "ingest:upsertTeams", "teams", teams, args.batch_size).await?;
+    send_batches(
+        &convex,
+        "ingest:upsertTeams",
+        "teams",
+        teams,
+        args.batch_size,
+    )
+    .await?;
 
     let all_players = load_all_players(&csv_dir)?;
     let players = load_players(&csv_dir, &all_players)?;
-    send_batches(&convex, "ingest:upsertPlayers", "players", players, args.batch_size).await?;
+    send_batches(
+        &convex,
+        "ingest:upsertPlayers",
+        "players",
+        players,
+        args.batch_size,
+    )
+    .await?;
 
     let games = load_games(&csv_dir, &history_spans)?;
-    send_batches(&convex, "ingest:upsertGames", "games", games, args.batch_size).await?;
+    send_batches(
+        &convex,
+        "ingest:upsertGames",
+        "games",
+        games,
+        args.batch_size,
+    )
+    .await?;
 
     let boxscores = load_player_boxscores(&csv_dir, &team_map)?;
     send_batches(
@@ -68,7 +96,14 @@ pub async fn run_seed(args: Args) -> Result<()> {
     .await?;
 
     let drafts = load_drafts(&csv_dir)?;
-    send_batches(&convex, "ingest:upsertDrafts", "drafts", drafts, args.batch_size).await?;
+    send_batches(
+        &convex,
+        "ingest:upsertDrafts",
+        "drafts",
+        drafts,
+        args.batch_size,
+    )
+    .await?;
 
     let player_totals = load_player_season_totals(&csv_dir)?;
     send_batches(
@@ -119,7 +154,14 @@ pub async fn run_seed(args: Args) -> Result<()> {
     .await?;
 
     let awards = load_awards(&csv_dir)?;
-    send_batches(&convex, "ingest:upsertAwards", "awards", awards, args.batch_size).await?;
+    send_batches(
+        &convex,
+        "ingest:upsertAwards",
+        "awards",
+        awards,
+        args.batch_size,
+    )
+    .await?;
 
     Ok(())
 }
@@ -200,7 +242,17 @@ fn load_team_history(
     for result in reader.deserialize::<TeamHistoryRow>() {
         let row = result?;
         let team_id = row.team_id;
-        let league_id = league_id_from_code(row.league.as_deref().unwrap_or("NBA"));
+        let league_code = row.league.as_deref().unwrap_or("NBA");
+        let league_id = match league_id_from_code(league_code) {
+            Some(league_id) => league_id,
+            None => {
+                warn!(
+                    "Skipping team history row with unknown league: {}",
+                    league_code
+                );
+                continue;
+            }
+        };
         let season_end = row.season_active_till.unwrap_or(current_year());
         let is_active = row
             .season_active_till
@@ -214,22 +266,17 @@ fn load_team_history(
         };
 
         map.insert(team_key(&row.team_city, &row.team_name), entry);
-        spans
-            .entry(team_id)
-            .or_default()
-            .push(TeamHistorySpan {
-                league_id,
-                season_start: row.season_founded,
-                season_end,
-            });
+        spans.entry(team_id).or_default().push(TeamHistorySpan {
+            league_id,
+            season_start: row.season_founded,
+            season_end,
+        });
 
         history.push(TeamHistory {
             team_history_id: counter,
             team_id,
             effective_start: format!("{}-01-01", row.season_founded),
-            effective_end: row
-                .season_active_till
-                .map(|year| format!("{}-12-31", year)),
+            effective_end: row.season_active_till.map(|year| format!("{}-12-31", year)),
             city: row.team_city,
             nickname: row.team_name,
             abbreviation: Some(row.team_abbrev),
@@ -266,22 +313,26 @@ fn load_all_players(csv_dir: &PathBuf) -> Result<HashMap<i64, (i32, i32)>> {
 
     let mut reader = ReaderBuilder::new()
         .has_headers(true)
+        .flexible(true)
         .from_path(&path)
         .with_context(|| format!("Failed to open {}", path.display()))?;
 
     let mut map = HashMap::new();
     for result in reader.deserialize::<AllPlayersRow>() {
-        let row = result?;
-        map.insert(row.person_id, (row.from_year, row.to_year));
+        match result {
+            Ok(row) => {
+                map.insert(row.person_id, (row.from_year, row.to_year));
+            }
+            Err(err) => {
+                warn!("Skipping malformed all_players row: {}", err);
+            }
+        }
     }
 
     Ok(map)
 }
 
-fn load_players(
-    csv_dir: &PathBuf,
-    all_players: &HashMap<i64, (i32, i32)>,
-) -> Result<Vec<Player>> {
+fn load_players(csv_dir: &PathBuf, all_players: &HashMap<i64, (i32, i32)>) -> Result<Vec<Player>> {
     let path = csv_dir.join("Players.csv");
     let mut reader = ReaderBuilder::new()
         .has_headers(true)
@@ -291,7 +342,9 @@ fn load_players(
     let mut players = Vec::new();
     for result in reader.deserialize::<PlayerRow>() {
         let row = result?;
-        let display_name = format!("{} {}", row.first_name, row.last_name).trim().to_string();
+        let display_name = format!("{} {}", row.first_name, row.last_name)
+            .trim()
+            .to_string();
         let (from_year, to_year) = all_players.get(&row.person_id).copied().unwrap_or((0, 0));
 
         players.push(Player {
@@ -305,7 +358,11 @@ fn load_players(
                 Some(display_name)
             },
             birth_date: row.birthdate,
-            from_year: if from_year == 0 { None } else { Some(from_year) },
+            from_year: if from_year == 0 {
+                None
+            } else {
+                Some(from_year)
+            },
             to_year: if to_year == 0 { None } else { Some(to_year) },
         });
     }
@@ -333,7 +390,7 @@ fn load_games(
         let season_id = season_id_for_league_year(league_id, season_year);
 
         games.push(Game {
-            game_id: row.game_id.to_string(),
+            game_id: row.game_id,
             league_id,
             season_id,
             season_type: row.game_type.unwrap_or_else(|| "Regular".to_string()),
@@ -361,13 +418,16 @@ fn load_player_boxscores(
         .with_context(|| format!("Failed to open {}", path.display()))?;
 
     let mut boxscores = Vec::new();
+    let mut missing_team_keys = HashSet::new();
     for result in reader.deserialize::<PlayerStatRow>() {
         let row = result?;
         let team_key = team_key(&row.team_city, &row.team_name);
         let team_id = match team_map.get(&team_key) {
             Some(entry) => entry.team_id,
             None => {
-                warn!("Missing team mapping for {}", team_key);
+                if missing_team_keys.insert(team_key.clone()) {
+                    warn!("Missing team mapping for {}", team_key);
+                }
                 continue;
             }
         };
@@ -438,9 +498,19 @@ fn load_drafts(csv_dir: &PathBuf) -> Result<Vec<Draft>> {
     let mut drafts = Vec::new();
     for result in reader.deserialize::<DraftRow>() {
         let row = result?;
+        let overall_pick = match row.overall_pick {
+            Some(pick) => pick,
+            None => {
+                warn!(
+                    "Skipping draft row with missing overall_pick (season {})",
+                    row.season
+                );
+                continue;
+            }
+        };
         drafts.push(Draft {
             season_year: row.season,
-            pick_overall: row.overall_pick,
+            pick_overall: overall_pick,
             round_number: row.round,
             pick_in_round: None,
             team_abbrev: row.team_abbrev,
@@ -466,6 +536,7 @@ fn load_player_season_totals(csv_dir: &PathBuf) -> Result<Vec<PlayerSeasonTotal>
         totals.push(PlayerSeasonTotal {
             season_year: row.season,
             player_bref_id: row.player_id,
+            player_name: row.player_name,
             team_abbrev: row.team_abbrev,
             games: row.games,
             games_started: row.games_started,
@@ -528,10 +599,20 @@ fn load_team_season_totals(csv_dir: &PathBuf) -> Result<Vec<TeamSeasonTotal>> {
     let mut totals = Vec::new();
     for result in reader.deserialize::<TeamSeasonTotalsRow>() {
         let row = result?;
+        let games = match row.games {
+            Some(games) => games,
+            None => {
+                warn!(
+                    "Skipping team totals row with missing games (season {}, team {})",
+                    row.season, row.team_abbrev
+                );
+                continue;
+            }
+        };
         totals.push(TeamSeasonTotal {
             season_year: row.season,
             team_abbrev: row.team_abbrev,
-            games: row.games,
+            games,
             minutes: row.minutes,
             points: row.points,
             assists: row.assists,
@@ -550,9 +631,7 @@ fn load_team_season_totals(csv_dir: &PathBuf) -> Result<Vec<TeamSeasonTotal>> {
     Ok(totals)
 }
 
-fn load_team_summaries(
-    csv_dir: &PathBuf,
-) -> Result<(Vec<TeamSeasonAdvanced>, Vec<Standing>)> {
+fn load_team_summaries(csv_dir: &PathBuf) -> Result<(Vec<TeamSeasonAdvanced>, Vec<Standing>)> {
     let path = csv_dir.join("Team Summaries.csv");
     let mut reader = ReaderBuilder::new()
         .has_headers(true)
@@ -564,11 +643,31 @@ fn load_team_summaries(
 
     for result in reader.deserialize::<TeamSummaryRow>() {
         let row = result?;
+        let wins = match row.wins {
+            Some(wins) => wins,
+            None => {
+                warn!(
+                    "Skipping team summary row with missing wins (season {}, team {})",
+                    row.season, row.team_abbrev
+                );
+                continue;
+            }
+        };
+        let losses = match row.losses {
+            Some(losses) => losses,
+            None => {
+                warn!(
+                    "Skipping team summary row with missing losses (season {}, team {})",
+                    row.season, row.team_abbrev
+                );
+                continue;
+            }
+        };
         advanced.push(TeamSeasonAdvanced {
             season_year: row.season,
             team_abbrev: row.team_abbrev.clone(),
-            wins: row.wins,
-            losses: row.losses,
+            wins,
+            losses,
             srs: row.srs,
             pace: row.pace,
             off_rtg: row.off_rtg,
@@ -579,8 +678,8 @@ fn load_team_summaries(
         standings.push(Standing {
             season_year: row.season,
             team_abbrev: row.team_abbrev,
-            wins: row.wins,
-            losses: row.losses,
+            wins,
+            losses,
             playoffs: row.playoffs.unwrap_or(false),
         });
     }
@@ -645,24 +744,31 @@ fn load_all_star_awards(csv_dir: &PathBuf) -> Result<Vec<Award>> {
     }
     let mut reader = ReaderBuilder::new()
         .has_headers(true)
+        .flexible(true)
         .from_path(&path)
         .with_context(|| format!("Failed to open {}", path.display()))?;
 
     let mut awards = Vec::new();
     for result in reader.deserialize::<AllStarRow>() {
-        let row = result?;
-        if let Some(award) = award_with_key(
-            "ALL_STAR".to_string(),
-            row.season,
-            row.player_id,
-            row.player_name,
-            row.team_abbrev,
-            None,
-            None,
-            None,
-            None,
-        ) {
-            awards.push(award);
+        match result {
+            Ok(row) => {
+                if let Some(award) = award_with_key(
+                    "ALL_STAR".to_string(),
+                    row.season,
+                    row.player_id,
+                    row.player_name,
+                    row.team_abbrev,
+                    None,
+                    None,
+                    None,
+                    None,
+                ) {
+                    awards.push(award);
+                }
+            }
+            Err(err) => {
+                warn!("Skipping malformed All-Star row: {}", err);
+            }
         }
     }
     Ok(awards)
@@ -676,29 +782,36 @@ fn load_end_of_season_awards(csv_dir: &PathBuf) -> Result<Vec<Award>> {
     }
     let mut reader = ReaderBuilder::new()
         .has_headers(true)
+        .flexible(true)
         .from_path(&path)
         .with_context(|| format!("Failed to open {}", path.display()))?;
 
     let mut awards = Vec::new();
     for result in reader.deserialize::<EndSeasonRow>() {
-        let row = result?;
-        let award_type = format!(
-            "{}_{}",
-            row.award_type.to_uppercase(),
-            row.team_number.to_uppercase()
-        );
-        if let Some(award) = award_with_key(
-            award_type,
-            row.season,
-            row.player_id,
-            row.player_name,
-            None,
-            None,
-            None,
-            None,
-            None,
-        ) {
-            awards.push(award);
+        match result {
+            Ok(row) => {
+                let award_type = format!(
+                    "{}_{}",
+                    row.award_type.to_uppercase(),
+                    row.team_number.to_uppercase()
+                );
+                if let Some(award) = award_with_key(
+                    award_type,
+                    row.season,
+                    row.player_id,
+                    row.player_name,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                ) {
+                    awards.push(award);
+                }
+            }
+            Err(err) => {
+                warn!("Skipping malformed End of Season row: {}", err);
+            }
         }
     }
     Ok(awards)
@@ -712,24 +825,31 @@ fn load_end_of_season_votes(csv_dir: &PathBuf) -> Result<Vec<Award>> {
     }
     let mut reader = ReaderBuilder::new()
         .has_headers(true)
+        .flexible(true)
         .from_path(&path)
         .with_context(|| format!("Failed to open {}", path.display()))?;
 
     let mut awards = Vec::new();
     for result in reader.deserialize::<EndSeasonVoteRow>() {
-        let row = result?;
-        if let Some(award) = award_with_key(
-            row.award_type.to_uppercase(),
-            row.season,
-            row.player_id,
-            row.player_name,
-            None,
-            row.team_number.and_then(parse_rank),
-            row.points_won,
-            row.points_max,
-            row.share,
-        ) {
-            awards.push(award);
+        match result {
+            Ok(row) => {
+                if let Some(award) = award_with_key(
+                    row.award_type.to_uppercase(),
+                    row.season,
+                    row.player_id,
+                    row.player_name,
+                    None,
+                    row.team_number.and_then(parse_rank),
+                    row.points_won,
+                    row.points_max,
+                    row.share,
+                ) {
+                    awards.push(award);
+                }
+            }
+            Err(err) => {
+                warn!("Skipping malformed End of Season voting row: {}", err);
+            }
         }
     }
     Ok(awards)
@@ -773,9 +893,7 @@ async fn send_batches<T: serde::Serialize>(
                         let next_size = (current_batch_size / 2).max(1);
                         warn!(
                             "Batch too large for {} ({} items). Retrying with {}",
-                            function,
-                            current_batch_size,
-                            next_size
+                            function, current_batch_size, next_size
                         );
                         current_batch_size = next_size;
                         end = (start + current_batch_size).min(items.len());
@@ -790,15 +908,23 @@ async fn send_batches<T: serde::Serialize>(
 }
 
 fn team_key(city: &str, name: &str) -> String {
-    format!("{}|{}", city.trim(), name.trim())
+    let normalized_city = normalize_team_city(city);
+    format!("{}|{}", normalized_city.trim(), name.trim())
 }
 
-fn league_id_from_code(code: &str) -> i32 {
+fn normalize_team_city(city: &str) -> &str {
+    match city.trim() {
+        "LA" => "Los Angeles",
+        _ => city,
+    }
+}
+
+fn league_id_from_code(code: &str) -> Option<i32> {
     match code.to_uppercase().as_str() {
-        "NBA" => 1,
-        "BAA" => 2,
-        "ABA" => 3,
-        _ => 1,
+        "NBA" => Some(1),
+        "BAA" => Some(2),
+        "ABA" => Some(3),
+        _ => None,
     }
 }
 
@@ -902,7 +1028,7 @@ struct PlayerRow {
 #[derive(Debug, Deserialize)]
 struct GameRow {
     #[serde(rename = "gameId")]
-    game_id: i64,
+    game_id: String,
     #[serde(rename = "gameDateTimeEst")]
     game_date_time: String,
     #[serde(rename = "hometeamId")]
@@ -999,8 +1125,8 @@ struct TeamStatRow {
 struct DraftRow {
     #[serde(rename = "season")]
     season: i32,
-    #[serde(rename = "overall_pick")]
-    overall_pick: i32,
+    #[serde(rename = "overall_pick", deserialize_with = "parse_opt_i32")]
+    overall_pick: Option<i32>,
     #[serde(rename = "round", deserialize_with = "parse_opt_i32")]
     round: Option<i32>,
     #[serde(rename = "tm", deserialize_with = "parse_opt_string")]
@@ -1019,6 +1145,8 @@ struct PlayerSeasonTotalsRow {
     season: i32,
     #[serde(rename = "player_id")]
     player_id: String,
+    #[serde(rename = "player", default, deserialize_with = "parse_opt_string")]
+    player_name: Option<String>,
     #[serde(rename = "team")]
     team_abbrev: String,
     #[serde(rename = "g")]
@@ -1089,8 +1217,8 @@ struct TeamSeasonTotalsRow {
     season: i32,
     #[serde(rename = "abbreviation")]
     team_abbrev: String,
-    #[serde(rename = "g")]
-    games: i32,
+    #[serde(rename = "g", deserialize_with = "parse_opt_i32")]
+    games: Option<i32>,
     #[serde(rename = "mp", deserialize_with = "parse_opt_f64")]
     minutes: Option<f64>,
     #[serde(rename = "pts", deserialize_with = "parse_opt_i32")]
@@ -1123,10 +1251,10 @@ struct TeamSummaryRow {
     season: i32,
     #[serde(rename = "abbreviation")]
     team_abbrev: String,
-    #[serde(rename = "w")]
-    wins: i32,
-    #[serde(rename = "l")]
-    losses: i32,
+    #[serde(rename = "w", deserialize_with = "parse_opt_i32")]
+    wins: Option<i32>,
+    #[serde(rename = "l", deserialize_with = "parse_opt_i32")]
+    losses: Option<i32>,
     #[serde(rename = "srs", deserialize_with = "parse_opt_f64")]
     srs: Option<f64>,
     #[serde(rename = "pace", deserialize_with = "parse_opt_f64")]

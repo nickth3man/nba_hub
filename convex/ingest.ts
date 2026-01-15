@@ -300,6 +300,7 @@ export const upsertPlayerSeasonTotals = mutation({
       v.object({
         season_year: v.number(),
         player_bref_id: v.string(),
+        player_name: v.optional(v.string()),
         team_abbrev: v.string(),
         games: v.number(),
         games_started: v.optional(v.number()),

@@ -43,6 +43,7 @@ export default defineSchema({
   })
     .index("by_team_history_id", ["team_history_id"])
     .index("by_team_id", ["team_id"])
+    .index("by_abbreviation", ["abbreviation"])
     .index("by_active", ["is_active", "team_id"]),
 
   players: defineTable({
@@ -135,6 +136,7 @@ export default defineSchema({
   player_season_totals: defineTable({
     season_year: v.number(),
     player_bref_id: v.string(),
+    player_name: v.optional(v.string()),
     team_abbrev: v.string(),
     games: v.number(),
     games_started: v.optional(v.number()),
@@ -155,6 +157,7 @@ export default defineSchema({
   })
     .index("by_player_season_team", ["player_bref_id", "season_year", "team_abbrev"])
     .index("by_player_season", ["player_bref_id", "season_year"])
+    .index("by_season_year", ["season_year"])
     .index("by_season_team", ["season_year", "team_abbrev"]),
 
   player_season_advanced: defineTable({
@@ -173,6 +176,7 @@ export default defineSchema({
   })
     .index("by_player_season_team", ["player_bref_id", "season_year", "team_abbrev"])
     .index("by_player_season", ["player_bref_id", "season_year"])
+    .index("by_season_year", ["season_year"])
     .index("by_season_team", ["season_year", "team_abbrev"]),
 
   team_season_totals: defineTable({
@@ -191,7 +195,9 @@ export default defineSchema({
     fta: v.optional(v.number()),
     turnovers: v.optional(v.number()),
     pf: v.optional(v.number()),
-  }).index("by_team_season", ["team_abbrev", "season_year"]),
+  })
+    .index("by_team_season", ["team_abbrev", "season_year"])
+    .index("by_season_year", ["season_year"]),
 
   team_season_advanced: defineTable({
     season_year: v.number(),
@@ -203,7 +209,9 @@ export default defineSchema({
     off_rtg: v.optional(v.number()),
     def_rtg: v.optional(v.number()),
     net_rtg: v.optional(v.number()),
-  }).index("by_team_season", ["team_abbrev", "season_year"]),
+  })
+    .index("by_team_season", ["team_abbrev", "season_year"])
+    .index("by_season_year", ["season_year"]),
 
   standings: defineTable({
     season_year: v.number(),
@@ -211,7 +219,9 @@ export default defineSchema({
     wins: v.number(),
     losses: v.number(),
     playoffs: v.boolean(),
-  }).index("by_team_season", ["team_abbrev", "season_year"]),
+  })
+    .index("by_team_season", ["team_abbrev", "season_year"])
+    .index("by_season_year", ["season_year"]),
 
   drafts: defineTable({
     season_year: v.number(),
@@ -241,6 +251,7 @@ export default defineSchema({
   })
     .index("by_award_key", ["award_key"])
     .index("by_award_season", ["award_type", "season_year"])
+    .index("by_season_year", ["season_year"])
     .index("by_player_bref_id", ["player_bref_id"]),
 
   transactions: defineTable({
@@ -251,5 +262,6 @@ export default defineSchema({
     details: v.string(),
   })
     .index("by_transaction_id", ["transaction_id"])
+    .index("by_season_year", ["season_year"])
     .index("by_player_bref_id", ["player_bref_id"]),
 });

@@ -140,6 +140,7 @@ pub struct Draft {
 pub struct PlayerSeasonTotal {
     pub season_year: i32,
     pub player_bref_id: String,
+    pub player_name: Option<String>,
     pub team_abbrev: String,
     pub games: i32,
     pub games_started: Option<i32>,

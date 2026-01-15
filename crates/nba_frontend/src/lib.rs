@@ -1,10 +1,21 @@
 use leptos::*;
-use leptos_router::*;
 use leptos_meta::*;
+use leptos_router::*;
 
+mod components;
+mod convex;
+mod data;
+mod models;
 mod pages;
-use pages::players::Players;
-use pages::teams::Teams;
+mod styles;
+mod utils;
+
+use components::AppLayout;
+use pages::{
+    AwardsPage, DraftPage, GlossaryPage, Home, LeadersPage, PlayerProfile, Players, SeasonDetail,
+    SeasonsIndex, TeamProfile, Teams, TransactionsPage,
+};
+use styles::APP_STYLES;
 
 #[component]
 pub fn App() -> impl IntoView {
@@ -13,19 +24,28 @@ pub fn App() -> impl IntoView {
     view! {
         <Stylesheet id="leptos" href="/pkg/nba_frontend.css"/>
         <Title text="NBA Hub"/>
+        <style>{APP_STYLES}</style>
         <Router>
-            <main>
-                <nav>
-                    <a href="/">"Home"</a>
-                    <a href="/players">"Players"</a>
-                    <a href="/teams">"Teams"</a>
-                </nav>
+            <AppLayout>
                 <Routes>
-                    <Route path="/" view=|| view! { <h1>"Welcome to NBA Hub"</h1> }/>
+                    <Route path="/" view=Home/>
                     <Route path="/players" view=Players/>
+                    <Route path="/players/:player_bref_id" view=PlayerProfile/>
                     <Route path="/teams" view=Teams/>
+                    <Route path="/teams/:team_abbrev" view=TeamProfile/>
+                    <Route path="/seasons" view=SeasonsIndex/>
+                    <Route path="/seasons/:year" view=SeasonDetail/>
+                    <Route path="/leaders" view=LeadersPage/>
+                    <Route path="/leaders/:year" view=LeadersPage/>
+                    <Route path="/awards" view=AwardsPage/>
+                    <Route path="/awards/:year" view=AwardsPage/>
+                    <Route path="/draft" view=DraftPage/>
+                    <Route path="/draft/:year" view=DraftPage/>
+                    <Route path="/transactions" view=TransactionsPage/>
+                    <Route path="/transactions/:year" view=TransactionsPage/>
+                    <Route path="/glossary" view=GlossaryPage/>
                 </Routes>
-            </main>
+            </AppLayout>
         </Router>
     }
 }
