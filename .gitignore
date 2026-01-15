@@ -43,3 +43,8 @@ node_modules/
 /.opencode
 /data/nba.duckdb
 /data/raw
+
+# Rust
+target/
+
+.env.local

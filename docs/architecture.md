@@ -1,55 +1,46 @@
 # Architecture
 
-The NBA Data Hub is designed as a modular data lakehouse using DuckDB as the central storage engine.
+NBA Hub uses Rust for ETL and validation, Convex for serving application data, and DuckDB for local analytics and audits.
 
 ## Directory Structure
 
-- **`src/`**: Contains the source code.
-  - **`core/`**: Core infrastructure code.
-    - `config.py`: Configuration settings and file paths.
-    - `database.py`: DuckDB connection management.
-  - **`etl/`**: Extract, Transform, Load pipelines.
-    - `load/`: Scripts to load raw data (CSV, JSON) into DuckDB staging tables.
-    - `transform/`: Scripts to clean and normalize data into a unified schema.
-    - `ingest/`: Scripts to populate the final analytical tables from staging/transformed data.
-  - **`scraping/`**: Web scrapers using Playwright and BeautifulSoup to fetch data from external sources (e.g., Basketball-Reference).
-  - **`cli/`**: Command-line entry points for running the pipelines.
-- **`data/`**: Data storage.
-  - `raw/`: Raw CSV and JSON files.
-  - `nba.duckdb`: The main DuckDB database file.
-- **`scripts/`**: Utility and maintenance scripts.
-- **`tests/`**: Unit and integration tests.
+- **`crates/`**: Rust workspace.
+  - **`nba_core`**: Shared schema types and configuration.
+  - **`nba_scraper`**: HTTP scraping + parsing utilities.
+  - **`nba_etl`**: ETL CLI (backfill, seed, validation).
+  - **`nba_frontend`**: Leptos frontend (SSR/CSR).
+- **`convex/`**: Convex schema + functions.
+- **`data/`**: Local datasets and DuckDB.
+  - `raw/`: Source CSV/JSON used for ingestion.
+  - `nba.duckdb`: Validation/analytics DB.
+- **`docs/`**: Project documentation.
+- **`src/`**: Legacy Python pipeline (reference only).
 
 ## Data Flow
 
-The data pipeline follows a **Scrape -> Load -> Transform -> Ingest** pattern:
+1. **Scrape/Extract**:
+   - Rust scrapers fetch Basketball-Reference pages and parse tables.
+   - Raw HTML is discarded after parsing; JSON records are retained.
 
-1.  **Scrape/Extract**:
-    - Data is scraped from websites or fetched from APIs.
-    - Raw HTML or JSON is saved to `data/raw/`.
+2. **Seed/Load**:
+   - CSV archives in `data/raw` are parsed into canonical Rust structs.
+   - Canonical records are pushed to Convex via mutations.
 
-2.  **Loading**:
-    - Raw CSV/JSON files are loaded into DuckDB as **Staging Tables**.
-    - These tables mirror the structure of the raw files.
+3. **Validation**:
+   - DuckDB ingests subsets of Convex or CSV data for integrity checks.
+   - Validation reports discrepancies (totals vs sums, derived stats).
 
-3.  **Transformation**:
-    - Data is cleaned, cast to correct types, and normalized.
-    - Schema migrations are applied to ensure consistency.
+4. **Serve**:
+   - Leptos renders public pages using Convex queries.
+   - Convex serves read-only API responses for page rendering.
 
-4.  **Ingestion**:
-    - Transformed data is inserted into **Unified Tables**.
-    - These tables form the core data model for analysis.
+## Core Schema
 
-## Database Schema
+The core schema mirrors `convex/schema.ts` and Rust types in `crates/nba_core/src/schema.rs`:
 
-The database uses a relational schema with `unified_` tables serving as the core data model.
-
-- **`unified_players`**: Central registry of all players.
-- **`unified_teams`**: Team history and metadata.
-- **`unified_games`**: Game results and metadata.
-- **`unified_player_boxscores`**: Detailed player stats per game.
-- **`unified_seasons`**: Season metadata (start/end dates).
-- **`unified_leagues`**: League definitions (NBA, BAA, ABA).
-- **`unified_drafts`**: Draft history.
-- **`unified_coaches`**: Coach registry.
-- **`unified_referees`**: Referee registry.
+- `leagues`, `seasons`, `teams`, `team_history`
+- `players`, `games`
+- `player_boxscores`, `team_boxscores`
+- `player_season_totals`, `player_season_advanced`
+- `team_season_totals`, `team_season_advanced`
+- `standings`, `awards`, `drafts`, `transactions`, `coaches`, `referees`

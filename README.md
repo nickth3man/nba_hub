@@ -1,44 +1,51 @@
-# NBA Data Hub
+# NBA Hub
 
-A comprehensive NBA/BAA/ABA historical data lakehouse (1946-2026), built with Python and DuckDB.
+Rust-first NBA/BAA/ABA data pipeline and public stat site using Convex for APIs and DuckDB for validation/analytics.
 
 ## Overview
 
-This project provides a robust pipeline to scrape, ingest, transform, and analyze historical NBA data. It leverages **DuckDB** for high-performance analytics and **Playwright** for reliable web scraping.
+NBA Hub ingests historical data, normalizes it into a unified schema, and serves stateless public pages via a Leptos frontend. The Rust ETL pushes canonical JSON to Convex, while DuckDB is used locally for heavy validation and audits.
 
 ## Documentation
 
-- **[Getting Started](docs/getting_started.md)**: Installation, setup, and running your first pipeline.
-- **[Architecture](docs/architecture.md)**: Understanding the project structure, data flow, and schema.
-- **[Configuration](docs/configuration.md)**: Configuring paths and settings.
-- **[Troubleshooting](docs/troubleshooting.md)**: Common issues and fixes.
+- **[Getting Started](docs/getting_started.md)**: Setup for Rust + Convex + DuckDB.
+- **[Architecture](docs/architecture.md)**: Component boundaries and data flow.
+- **[Configuration](docs/configuration.md)**: Environment variables and paths.
+- **[Troubleshooting](docs/troubleshooting.md)**: Common build/runtime issues.
 
 ## Quick Start
 
-1.  **Install dependencies**:
-    ```bash
-    pip install -r requirements.txt
-    playwright install
-    ```
+1. **Install toolchains**:
+   ```bash
+   rustup update stable
+   npm install
+   ```
 
-2.  **Initialize the database**:
-    ```bash
-    python src/cli/run_init.py
-    ```
+2. **Start Convex locally**:
+   ```bash
+   npx convex dev
+   ```
 
-3.  **Run the pipeline**:
-    ```bash
-    python src/cli/run_all.py
-    ```
+3. **Build and run ETL**:
+   ```bash
+   cargo run -p nba_etl -- --help
+   ```
 
-For more details, see the [Getting Started Guide](docs/getting_started.md).
+4. **Run the frontend (CSR dev)**:
+   ```bash
+   cargo run -p nba_frontend
+   ```
+
+For more detail, see the [Getting Started Guide](docs/getting_started.md).
 
 ## Data Sources
 
-- **Kaggle**: Historical game and player data.
-- **NBA API**: Official stats and live data.
-- **Basketball-Reference**: Scraped historical awards and voting data.
-- **Octonion GitHub**: BAA archives.
+- **Basketball-Reference**: Game metadata (boxscores, officials, coaches).
+- **Kaggle/CSV archives**: Historical player/team/game tables (local `data/raw`).
+
+## Legacy Note
+
+The Python pipeline under `src/` is legacy and retained for reference only. New development targets the Rust + Convex stack.
 
 ## License
 

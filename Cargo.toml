@@ -1,0 +1,8 @@
+[workspace]
+members = [
+    "crates/nba_core",
+    "crates/nba_scraper",
+    "crates/nba_etl",
+    "crates/nba_frontend",
+]
+resolver = "2"
